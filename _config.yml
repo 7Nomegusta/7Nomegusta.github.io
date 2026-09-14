@@ -74,7 +74,7 @@ cdn:
 
 # Sidebar avatar
 # Example: /assets/img/avatar.png
-avatar:
+avatar:/assets/img/avatar.png
 
 # Social preview image
 social_preview_image:
