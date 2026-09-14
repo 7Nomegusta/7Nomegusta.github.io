@@ -1,0 +1,95 @@
+categories:
+  - name: TryHackMe
+    slug: tryhackme
+    icon: fas fa-cube
+    description: Guided labs, challenge rooms and practical writeups from TryHackMe.
+
+  - name: Web Pentest
+    slug: web-pentest
+    icon: fas fa-globe
+    description: Web application security, exploitation methodology and vulnerability analysis.
+
+  - name: Linux
+    slug: linux
+    icon: fab fa-linux
+    description: Linux enumeration, shells, privilege escalation and post-exploitation notes.
+
+  - name: Windows
+    slug: windows
+    icon: fab fa-windows
+    description: Windows services, SMB, RDP, Active Directory and privilege escalation.
+
+  - name: CTF
+    slug: ctf
+    icon: fas fa-flag
+    description: Capture-the-flag challenges, attack paths and lessons learned outside guided labs.
+
+  - name: Notes
+    slug: notes
+    icon: fas fa-terminal
+    description: Practical notes, command references, methodology and offensive-security cheatsheets.
+
+  - name: Certifications
+    slug: certifications
+    icon: fas fa-certificate
+    description: Study notes, labs and preparation material for offensive-security certifications.
+
+  - name: Research
+    slug: research
+    icon: fas fa-microscope
+    description: CVE analysis, vulnerability research and deeper technical investigations.
+
+tag_groups:
+  - name: Recon & Enumeration
+    icon: fas fa-search
+    tags:
+      - nmap
+      - ffuf
+      - gobuster
+      - wpscan
+      - enumeration
+      - web-enumeration
+
+  - name: Web Security
+    icon: fas fa-code
+    tags:
+      - idor
+      - xss
+      - sqli
+      - lfi
+      - rfi
+      - ssrf
+      - jwt
+      - authentication
+      - session-security
+      - wordpress
+
+  - name: Privilege Escalation
+    icon: fas fa-arrow-up
+    tags:
+      - linux-privesc
+      - windows-privesc
+      - cron
+      - suid
+      - capabilities
+      - reverse-shell
+
+  - name: Network & Services
+    icon: fas fa-network-wired
+    tags:
+      - smb
+      - ssh
+      - ftp
+      - rdp
+      - active-directory
+      - nosql
+
+  - name: Tooling
+    icon: fas fa-toolbox
+    tags:
+      - burp-suite
+      - sqlmap
+      - hydra
+      - metasploit
+      - john
+      - hashcat
