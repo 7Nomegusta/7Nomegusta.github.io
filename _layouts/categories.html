@@ -1,0 +1,108 @@
+---
+layout: page
+---
+
+<section class="rn-taxonomy-hero">
+  <div class="rn-taxonomy-logo-wrap">
+    <img class="rn-taxonomy-logo" src="{{ '/assets/img/avatar.png' | relative_url }}" alt="RedNoctis">
+  </div>
+
+  <div class="rn-taxonomy-hero-copy">
+    <div class="rn-eyebrow">REDNOCTIS // KNOWLEDGE BASE</div>
+    <h1>Attack Surface</h1>
+    <p>
+      Writeups, labs and offensive-security notes organized by area.
+      Each section becomes a live archive as new posts are published.
+    </p>
+  </div>
+</section>
+
+<section class="rn-section-head">
+  <div>
+    <span class="rn-section-kicker">01 // CATEGORIES</span>
+    <h2>Operational Domains</h2>
+  </div>
+  <span class="rn-section-rule"></span>
+</section>
+
+<div class="rn-category-grid">
+  {% for item in site.data.rednoctis_taxonomy.categories %}
+    {% assign posts = site.categories[item.name] %}
+    {% assign count = posts | size %}
+
+    {% if count > 0 %}
+      <a class="rn-category-card" href="{{ '/categories/' | append: item.slug | append: '/' | relative_url }}">
+    {% else %}
+      <div class="rn-category-card rn-category-card--inactive">
+    {% endif %}
+
+      <div class="rn-category-icon">
+        <i class="{{ item.icon }}"></i>
+      </div>
+
+      <div class="rn-category-body">
+        <div class="rn-category-topline">
+          <h3>{{ item.name }}</h3>
+
+          {% if count > 0 %}
+            <span class="rn-count">{{ count }}</span>
+          {% else %}
+            <span class="rn-status">COMING SOON</span>
+          {% endif %}
+        </div>
+
+        <p>{{ item.description }}</p>
+
+        <div class="rn-category-footer">
+          {% if count > 0 %}
+            <span>{{ count }} {% if count == 1 %}entry{% else %}entries{% endif %}</span>
+            <span class="rn-open">OPEN <i class="fas fa-arrow-right"></i></span>
+          {% else %}
+            <span>Awaiting first field note</span>
+            <span class="rn-dim">LOCKED</span>
+          {% endif %}
+        </div>
+      </div>
+
+    {% if count > 0 %}
+      </a>
+    {% else %}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{% assign uncatalogued = '' | split: '' %}
+{% for category in site.categories %}
+  {% assign category_name = category | first %}
+  {% assign known = false %}
+  {% for item in site.data.rednoctis_taxonomy.categories %}
+    {% if item.name == category_name %}
+      {% assign known = true %}
+    {% endif %}
+  {% endfor %}
+  {% unless known %}
+    {% assign uncatalogued = uncatalogued | push: category_name %}
+  {% endunless %}
+{% endfor %}
+
+{% if uncatalogued.size > 0 %}
+<section class="rn-section-head rn-section-head--compact">
+  <div>
+    <span class="rn-section-kicker">AUTO-DISCOVERED</span>
+    <h2>Additional Categories</h2>
+  </div>
+  <span class="rn-section-rule"></span>
+</section>
+
+<div class="rn-extra-taxonomy">
+  {% assign uncatalogued = uncatalogued | sort_natural %}
+  {% for name in uncatalogued %}
+    <a href="{{ '/categories/' | append: name | slugify | append: '/' | relative_url }}">
+      <i class="far fa-folder"></i>
+      {{ name }}
+      <span>{{ site.categories[name].size }}</span>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
