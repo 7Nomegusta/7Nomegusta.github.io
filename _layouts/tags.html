@@ -1,0 +1,93 @@
+---
+layout: page
+---
+
+<section class="rn-taxonomy-hero rn-taxonomy-hero--tags">
+  <div class="rn-taxonomy-logo-wrap">
+    <img class="rn-taxonomy-logo" src="{{ '/assets/img/avatar.png' | relative_url }}" alt="RedNoctis">
+  </div>
+
+  <div class="rn-taxonomy-hero-copy">
+    <div class="rn-eyebrow">REDNOCTIS // INDEX</div>
+    <h1>Technical Intel</h1>
+    <p>
+      Technologies, vulnerabilities, attack techniques and tools used across the RedNoctis knowledge base.
+    </p>
+  </div>
+</section>
+
+<section class="rn-section-head">
+  <div>
+    <span class="rn-section-kicker">02 // TAGS</span>
+    <h2>Technique Matrix</h2>
+  </div>
+  <span class="rn-section-rule"></span>
+</section>
+
+<div class="rn-tag-groups">
+  {% for group in site.data.rednoctis_taxonomy.tag_groups %}
+    <section class="rn-tag-group">
+      <header>
+        <div class="rn-tag-group-icon">
+          <i class="{{ group.icon }}"></i>
+        </div>
+        <div>
+          <span class="rn-tag-group-code">SECTOR {{ forloop.index | prepend: '0' }}</span>
+          <h3>{{ group.name }}</h3>
+        </div>
+      </header>
+
+      <div class="rn-tag-cloud">
+        {% for tag in group.tags %}
+          {% assign count = site.tags[tag] | size %}
+          {% if count > 0 %}
+            <a class="rn-tech-tag rn-tech-tag--active" href="{{ '/tags/' | append: tag | slugify | append: '/' | relative_url }}">
+              <span>#{{ tag }}</span>
+              <strong>{{ count }}</strong>
+            </a>
+          {% else %}
+            <span class="rn-tech-tag rn-tech-tag--inactive">
+              <span>#{{ tag }}</span>
+              <strong>0</strong>
+            </span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</div>
+
+{% assign known_tags = '' | split: '' %}
+{% for group in site.data.rednoctis_taxonomy.tag_groups %}
+  {% for tag in group.tags %}
+    {% assign known_tags = known_tags | push: tag %}
+  {% endfor %}
+{% endfor %}
+
+{% assign extra_tags = '' | split: '' %}
+{% for item in site.tags %}
+  {% assign tag_name = item | first %}
+  {% unless known_tags contains tag_name %}
+    {% assign extra_tags = extra_tags | push: tag_name %}
+  {% endunless %}
+{% endfor %}
+
+{% if extra_tags.size > 0 %}
+<section class="rn-section-head rn-section-head--compact">
+  <div>
+    <span class="rn-section-kicker">AUTO-DISCOVERED</span>
+    <h2>Additional Intel</h2>
+  </div>
+  <span class="rn-section-rule"></span>
+</section>
+
+<div class="rn-extra-taxonomy rn-extra-taxonomy--tags">
+  {% assign extra_tags = extra_tags | sort_natural %}
+  {% for tag in extra_tags %}
+    <a href="{{ '/tags/' | append: tag | slugify | append: '/' | relative_url }}">
+      #{{ tag }}
+      <span>{{ site.tags[tag].size }}</span>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
