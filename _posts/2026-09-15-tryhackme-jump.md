@@ -6,8 +6,8 @@ tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, lateral-movement, pa
 description: "Writeup da sala Jump, cobrindo enumeracao de FTP anonimo, execucao automatica de scripts, movimentacao lateral e PATH hijacking."
 permalink: /posts/jump/
 image:
-  path: /assets/img/posts/tryhackme/jump/01-reconnaissance.png
-  alt: Evidencia do reconhecimento com Nmap na sala TryHackMe Jump
+  path: /assets/img/posts/tryhackme/jump/jump.png
+  alt: Logo da sala Jump no TryHackMe
 ---
 
 # TryHackMe - Jump
