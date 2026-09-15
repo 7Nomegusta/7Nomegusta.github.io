@@ -4,6 +4,7 @@ date: 2026-09-15 07:00:00 -0300
 categories: [TryHackMe, Linux]
 tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, path-hijacking, privilege-escalation]
 description: "A Linux-focused TryHackMe writeup covering anonymous FTP, automated shell execution, horizontal privilege escalation and PATH hijacking."
+permalink: /posts/jump/
 image:
   path: /assets/img/posts/tryhackme/jump/01-reconnaissance.png
   alt: TryHackMe Jump reconnaissance evidence
