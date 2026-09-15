@@ -23,7 +23,9 @@ O raciocinio foi organizado na mesma ordem em que a exploracao ocorreu:
 - identificacao do processamento automatico de arquivos `.sh`;
 - acesso inicial como `recon_user`;
 - movimentacao lateral para `dev_user` por meio de um script gravavel;
-- exploracao de PATH hijacking para executar um payload como `monitor_user`.
+- exploracao de PATH hijacking para executar um payload como `monitor_user`;
+- movimentacao lateral para `ops_user` por meio de uma entrada insegura no `sudo`;
+- escalada final para `root` usando a permissao concedida para executar o `less`.
 
 > Este material foi produzido para fins educacionais e a atividade foi realizada somente contra o alvo autorizado do TryHackMe. As flags foram ocultadas.
 
@@ -159,6 +161,42 @@ A partir dessa condicao, criei um binario `ps` controlado contendo o payload de 
 
 Esse e o principio do **PATH hijacking**: um processo executado por outro usuario chama um binario apenas pelo nome, enquanto o atacante consegue influenciar um diretorio que aparece antes do caminho oficial no `PATH`.
 
+![Evidencia do shell obtido como monitor_user](/assets/img/posts/tryhackme/jump/10-monitor-user-shell.png)
+
+## Movimentacao lateral: monitor_user -> ops_user
+
+Com o shell de `monitor_user`, fiz uma enumeracao basica das permissoes delegadas ao usuario. A configuracao do `sudo` indicou que `monitor_user` podia executar `/usr/local/bin/deploy.sh` como `ops_user` sem fornecer senha.
+
+![Evidencia da permissao sudo de monitor_user](/assets/img/posts/tryhackme/jump/11-monitor-sudo-config.png)
+
+Ao analisar o script, observei que `/usr/local/bin/deploy.sh` executava o arquivo relativo `./deploy_helper.sh` dentro de `/opt/app`. Como o arquivo auxiliar estava gravavel pelo usuario atual, ele representava o ponto de controle da execucao: o conteudo poderia ser alterado e seria chamado quando o script principal fosse executado com `sudo`.
+
+![Evidencia do deploy.sh e da chamada ao arquivo auxiliar](/assets/img/posts/tryhackme/jump/12-deploy-script.png)
+
+![Evidencia do deploy_helper.sh gravavel](/assets/img/posts/tryhackme/jump/13-deploy-helper.png)
+
+Preparei o payload de reverse shell no arquivo auxiliar e executei o script principal com a delegacao disponivel:
+
+```bash
+sudo -u ops_user /usr/local/bin/deploy.sh
+```
+
+Como o processo foi iniciado no contexto de `ops_user`, a execucao do arquivo auxiliar devolveu uma nova conexao como esse usuario.
+
+![Evidencia do payload preparado para o deploy_helper.sh](/assets/img/posts/tryhackme/jump/14-ops-user-payload.png)
+
+![Evidencia do shell obtido como ops_user](/assets/img/posts/tryhackme/jump/15-ops-user-shell.png)
+
+## Escalada final: ops_user -> root
+
+Na etapa seguinte, a enumeracao das permissoes de `ops_user` revelou outra configuracao insegura no `sudo`: o usuario podia executar `/usr/bin/less` como `root` sem senha.
+
+![Evidencia da permissao sudo de ops_user para executar less como root](/assets/img/posts/tryhackme/jump/16-root-sudo-config.png)
+
+Essa permissao permitiu usar o próprio `less` para abrir diretamente o arquivo de flag em `/root`. O acesso ao conteúdo confirmou a escalada final para `root`; o valor da flag permanece oculto na evidencia visual.
+
+![Evidencia da leitura da flag com less como root](/assets/img/posts/tryhackme/jump/17-root-less-flag.png)
+
 ---
 
 ## Principais aprendizados
@@ -168,7 +206,9 @@ Esse e o principio do **PATH hijacking**: um processo executado por outro usuari
 3. O `pspy` ajudou a identificar tarefas recorrentes e a relacionar cada tarefa ao usuario que a executava.
 4. Scripts gravaveis executados por outro usuario devem ser tratados como uma oportunidade de movimentacao lateral.
 5. Comandos chamados sem caminho absoluto precisam ser avaliados junto com a ordem do `PATH` e as permissoes dos diretorios envolvidos.
-6. Em um writeup publico, e importante preservar o raciocinio tecnico sem expor as respostas da sala. Por isso, as flags permanecem ocultas.
+6. Entradas do `sudo` que permitem executar scripts ou binarios como outro usuario ampliam o impacto de arquivos gravaveis.
+7. Binarios interativos como `less` tambem precisam ser avaliados com cuidado quando podem ser executados como `root`.
+8. Em um writeup publico, e importante preservar o raciocinio tecnico sem expor as respostas da sala. Por isso, as flags permanecem ocultas.
 
 ## Ferramentas utilizadas
 
@@ -177,3 +217,5 @@ Esse e o principio do **PATH hijacking**: um processo executado por outro usuari
 - Netcat
 - `pspy64`
 - Utilitarios de shell Linux
+- `sudo`
+- `less`
