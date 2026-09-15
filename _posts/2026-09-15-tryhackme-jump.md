@@ -2,189 +2,178 @@
 title: "TryHackMe - Jump"
 date: 2026-09-15 07:00:00 -0300
 categories: [TryHackMe, Linux]
-tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, path-hijacking, privilege-escalation]
-description: "A Linux-focused TryHackMe writeup covering anonymous FTP, automated shell execution, horizontal privilege escalation and PATH hijacking."
+tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, lateral-movement, path-hijacking, privilege-escalation]
+description: "Writeup da sala Jump, cobrindo enumeracao de FTP anonimo, execucao automatica de scripts, movimentacao lateral e PATH hijacking."
 permalink: /posts/jump/
 image:
   path: /assets/img/posts/tryhackme/jump/01-reconnaissance.png
-  alt: TryHackMe Jump reconnaissance evidence
+  alt: Evidencia do reconhecimento com Nmap na sala TryHackMe Jump
 ---
 
 # TryHackMe - Jump
 
-## Overview
+## Visao Geral
 
-This writeup documents my path through the **Jump** room on TryHackMe. The goal was to enumerate the exposed services, obtain an initial foothold, and move laterally between users by identifying insecure automation and execution contexts.
+Este writeup documenta o caminho seguido na sala **Jump**, do TryHackMe. O objetivo foi enumerar os servicos expostos, obter acesso inicial e realizar movimentacao lateral entre usuarios a partir de tarefas automatizadas e configuracoes inseguras.
 
-The main techniques covered were:
+O raciocinio foi organizado na mesma ordem em que a exploracao ocorreu:
 
-- Nmap service enumeration;
-- anonymous FTP access;
-- automated processing of uploaded shell scripts;
-- process monitoring with `pspy`;
-- exploitation of a writable script executed by another user;
-- PATH hijacking through an unqualified system binary.
+- reconhecimento dos servicos com Nmap;
+- enumeracao do FTP anonimo;
+- identificacao do processamento automatico de arquivos `.sh`;
+- acesso inicial como `recon_user`;
+- movimentacao lateral para `dev_user` por meio de um script gravavel;
+- exploracao de PATH hijacking para executar um payload como `monitor_user`.
 
-> This material is for educational purposes and was performed against the authorized TryHackMe target only. Flags are intentionally redacted.
+> Este material foi produzido para fins educacionais e a atividade foi realizada somente contra o alvo autorizado do TryHackMe. As flags foram ocultadas.
 
 ---
 
-## Reconnaissance
+## Reconhecimento
 
-I started with a service and version scan:
+O primeiro passo foi identificar portas, servicos e versoes com o Nmap:
 
 ```bash
 nmap -sC -sV -Pn <TARGET_IP>
 ```
 
-The scan identified two relevant services:
+O resultado mostrou as portas 21 e 22 abertas:
 
 ```text
 21/tcp  open  ftp  vsftpd 3.0.5
 22/tcp  open  ssh  OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
 ```
 
-The default scripts also reported that anonymous FTP authentication was allowed:
+Os scripts padrao do Nmap tambem indicaram que o servico FTP permitia autenticacao anonima. Como o servico expunha um diretorio acessivel sem credenciais, a proxima etapa foi enumerar seu conteudo e verificar as permissoes de leitura e escrita.
 
-```text
-ftp-anon: Anonymous FTP login allowed
-```
-
-![Nmap scan and FTP enumeration](/assets/img/posts/tryhackme/jump/01-reconnaissance.png)
+![Evidencia do reconhecimento com Nmap](/assets/img/posts/tryhackme/jump/01-reconnaissance.png)
 
 ---
 
-## Anonymous FTP
+## Enumeracao do FTP
 
-I connected to the FTP service using the anonymous account:
+Conectei-me ao servico utilizando o usuario anonimo:
 
 ```bash
 ftp <TARGET_IP>
 ```
 
-After logging in, the directory listing exposed two locations:
+Depois do login, a listagem apresentou dois diretorios:
 
 ```text
 incoming
 pub
 ```
 
-The `incoming` directory was writable. The `pub` directory contained information indicating that files uploaded to `incoming` were processed automatically when they matched an accepted format.
+O diretorio `incoming` possuia permissao de escrita. No diretorio `pub`, havia uma informacao indicando que determinados formatos enviados para `incoming` eram processados automaticamente.
 
-This changed the direction of the enumeration: instead of only looking for downloadable files, I tested which uploaded file types triggered server-side processing.
+Esse detalhe mudou a linha de investigacao. Em vez de apenas procurar arquivos para baixar, passei a testar quais extensoes eram aceitas e o que acontecia quando um arquivo correspondente era enviado ao diretorio gravavel.
+
+![Evidencia do login anonimo e da listagem do FTP](/assets/img/posts/tryhackme/jump/02-ftp-enumeration.png)
 
 ---
 
-## Initial Access
+## Acesso Inicial
 
-After testing different formats, shell scripts with the `.sh` extension were accepted and processed. I created a script containing a reverse shell, uploaded it to `incoming`, and started a listener on the attacker machine:
+Os testes mostraram que arquivos com extensao `.sh` eram processados. A partir disso, preparei um script contendo uma reverse shell, enviei o arquivo para `incoming` e deixei um listener aguardando a conexao:
 
 ```bash
 nc -nlvp 4444
 ```
 
-When the server processed the uploaded script, the connection returned a shell as:
+Quando o processamento automatico ocorreu, a conexao retornou um shell no contexto de `recon_user`.
 
-```text
-recon_user
-```
+![Evidencia do envio do script e do recebimento da conexao](/assets/img/posts/tryhackme/jump/03-initial-shell.png)
 
-From this foothold, I confirmed access to the first user flag. The value is not included in this public writeup.
+Com esse acesso inicial, confirmei a existencia da primeira flag. O valor foi ocultado tanto do texto quanto da evidencia visual publicada.
 
-![Initial access through the automated FTP upload](/assets/img/posts/tryhackme/jump/02-initial-access.png)
+![Evidencia do acesso inicial como recon_user](/assets/img/posts/tryhackme/jump/04-recon-user-access.png)
 
 ---
 
-## Horizontal Privilege Escalation
+## Movimentacao lateral: recon_user -> dev_user
 
-### recon_user -> dev_user
-
-With the initial shell established, I enumerated recurring processes using `pspy64`:
+Com o shell inicial estabelecido, o proximo objetivo foi entender quais tarefas eram executadas automaticamente e em qual contexto de usuario. Para isso, utilizei o `pspy64`, que permite observar processos sem exigir privilegios administrativos:
 
 ```bash
 ./pspy64
 ```
 
-The output revealed a scheduled execution of:
+Entre os processos recorrentes, apareceu a execucao de:
 
 ```text
 /bin/bash /opt/dev/backup.sh
 ```
 
-I then checked the permissions on the script:
+A descoberta foi relevante porque o script era executado por outro usuario. Em seguida, verifiquei suas permissoes:
 
 ```bash
 ls -la /opt/dev/backup.sh
 ```
 
-The file was owned by `dev_user`, but it was writable by the group/other permissions available to the current context. This meant the script could be modified before its next automated execution.
+O arquivo pertencia a `dev_user`, mas estava gravavel no contexto disponivel. Um script gravavel que sera executado automaticamente por outro usuario representa uma oportunidade de movimentacao lateral: o conteudo pode ser alterado antes da proxima execucao e os comandos adicionados serao executados com as permissoes do processo agendado.
 
-I added a controlled reverse-shell command to the script and opened a second listener:
+![Evidencia do processo backup.sh identificado pelo pspy](/assets/img/posts/tryhackme/jump/05-pspy-processes.png)
+
+![Evidencia das permissoes de escrita em backup.sh](/assets/img/posts/tryhackme/jump/06-backup-permissions.png)
+
+Editei o script para incluir uma reverse shell controlada e iniciei outro listener:
 
 ```bash
 nc -nlvp 4445
 ```
 
-When the scheduled task executed again, the new connection arrived as:
+Na execucao seguinte da tarefa automatizada, a conexao foi recebida como `dev_user`. Assim, a movimentacao lateral foi concluida sem depender de uma senha ou de um novo servico exposto.
 
-```text
-dev_user
-```
-
-This completed the first lateral movement step. The `dev_user` flag was also located, but is intentionally omitted here.
-
-![Process discovery, writable backup script and dev_user shell](/assets/img/posts/tryhackme/jump/03-horizontal-escalation.png)
+![Evidencia do shell obtido como dev_user e do arquivo de flag](/assets/img/posts/tryhackme/jump/07-dev-user-shell.png)
 
 ---
 
-## PATH Hijacking
+## PATH Hijacking: dev_user -> monitor_user
 
-### dev_user -> monitor_user
-
-Continuing the process enumeration from `dev_user`, I observed the recurring health-check service:
-
-```text
-/usr/local/bin/healthcheck
-```
-
-The script executed the `ps` command without an absolute path:
+Ainda a partir de `dev_user`, continuei analisando os processos observados pelo `pspy`. O servico recorrente `/usr/local/bin/healthcheck` chamou atencao porque executava o comando `ps` sem informar seu caminho absoluto:
 
 ```bash
 ps aux | grep -v grep
 ```
 
-Using a command name instead of `/usr/bin/ps` makes execution dependent on the process environment's `PATH`. I inspected the service definition:
+Em vez de chamar diretamente `/usr/bin/ps`, o shell precisa localizar um executavel chamado `ps` consultando os diretorios definidos na variavel `PATH`. O script do health-check era executado como `monitor_user`:
 
 ```bash
 cat /etc/systemd/system/healthcheck.service
 ```
 
-The service ran as `monitor_user` and exposed a useful PATH configuration:
+Na configuracao do servico, o PATH estava definido assim:
 
 ```text
 Environment=PATH=/opt/dev/bin:/usr/local/bin:/usr/bin
 ```
 
-Because `/opt/dev/bin` appeared before `/usr/bin`, a malicious executable named `ps` placed in that directory would be selected first. I created a controlled replacement that started a reverse shell, made it executable, and waited for the health-check service to invoke it.
+O shell procura os binarios da esquerda para a direita. Como `/opt/dev/bin` aparecia antes de `/usr/bin`, um binario falso chamado `ps`, colocado no primeiro diretorio pesquisado, poderia ser encontrado antes do binario legitimo do sistema.
 
-The technique is a classic PATH hijacking condition: a privileged or different-user process invokes a binary by name, while an attacker can write to an earlier directory in the search path.
+![Evidencia do script health-check executando ps sem caminho absoluto](/assets/img/posts/tryhackme/jump/08-healthcheck-script.png)
 
-![Health-check script, service PATH and PATH hijacking setup](/assets/img/posts/tryhackme/jump/04-path-hijacking.png)
+![Evidencia do PATH e da execucao do servico como monitor_user](/assets/img/posts/tryhackme/jump/09-service-path.png)
+
+A partir dessa condicao, criei um binario `ps` controlado contendo o payload de reverse shell e aguardei a execucao do health-check. Como o servico era executado no contexto de `monitor_user`, o payload seria chamado com as permissoes desse usuario.
+
+Esse e o principio do **PATH hijacking**: um processo executado por outro usuario chama um binario apenas pelo nome, enquanto o atacante consegue influenciar um diretorio que aparece antes do caminho oficial no `PATH`.
 
 ---
 
-## Key Lessons
+## Principais aprendizados
 
-1. **Small service details matter.** Anonymous FTP and a writable upload directory were enough to create the initial attack path.
-2. **Automated jobs expand the attack surface.** `pspy` exposed scripts and services that were not obvious from the initial login.
-3. **File permissions must be reviewed together with execution context.** A script is dangerous when it is both writable and executed by another user.
-4. **Always inspect how commands are invoked.** An unqualified command such as `ps` can become exploitable when the PATH order is attacker-influenced.
-5. **Public writeups should protect challenge answers.** The technical reasoning is preserved here, while the flags remain redacted.
+1. Um servico aparentemente simples pode revelar uma cadeia de ataque quando suas permissoes sao analisadas com cuidado.
+2. FTP anonimo, diretorio gravavel e processamento automatico de arquivos formaram o caminho ate o acesso inicial.
+3. O `pspy` ajudou a identificar tarefas recorrentes e a relacionar cada tarefa ao usuario que a executava.
+4. Scripts gravaveis executados por outro usuario devem ser tratados como uma oportunidade de movimentacao lateral.
+5. Comandos chamados sem caminho absoluto precisam ser avaliados junto com a ordem do `PATH` e as permissoes dos diretorios envolvidos.
+6. Em um writeup publico, e importante preservar o raciocinio tecnico sem expor as respostas da sala. Por isso, as flags permanecem ocultas.
 
-## Tools Used
+## Ferramentas utilizadas
 
 - Nmap
-- FTP client
+- Cliente FTP
 - Netcat
 - `pspy64`
-- Linux shell utilities
+- Utilitarios de shell Linux
