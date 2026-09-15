@@ -1,6 +1,6 @@
 ---
 title: "TryHackMe - Jump"
-date: 2026-09-15 18:00:00 -0300
+date: 2026-09-15 07:00:00 -0300
 categories: [TryHackMe, Linux]
 tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, path-hijacking, privilege-escalation]
 description: "A Linux-focused TryHackMe writeup covering anonymous FTP, automated shell execution, horizontal privilege escalation and PATH hijacking."
@@ -187,4 +187,3 @@ The technique is a classic PATH hijacking condition: a privileged or different-u
 - Netcat
 - `pspy64`
 - Linux shell utilities
-
