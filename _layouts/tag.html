@@ -1,0 +1,28 @@
+---
+layout: page
+---
+
+<header class="mb-4">
+  <h1>{{ page.title }}</h1>
+  <p class="text-muted">Technical notes and writeups tagged with this topic.</p>
+</header>
+
+<div class="post-list">
+  {% for post in page.posts %}
+    <article class="card-wrapper card">
+      <a href="{{ post.url | relative_url }}" class="post-preview d-flex flex-md-row flex-column">
+        <div class="flex-grow-1 p-3">
+          <h2 class="card-title my-2">{{ post.title }}</h2>
+          <div class="text-muted mb-2">
+            {% include datetime.html date=post.date tooltip=true %}
+          </div>
+          {% if post.description %}
+            <p class="card-text">{{ post.description }}</p>
+          {% else %}
+            <p class="card-text">Read the full writeup.</p>
+          {% endif %}
+        </div>
+      </a>
+    </article>
+  {% endfor %}
+</div>
