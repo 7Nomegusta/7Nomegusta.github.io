@@ -3,219 +3,223 @@ title: "TryHackMe - Jump"
 date: 2026-09-15 07:00:00 -0300
 categories: [TryHackMe, Linux]
 tags: [nmap, ftp, anonymous-ftp, reverse-shell, pspy, cron, lateral-movement, path-hijacking, privilege-escalation]
-description: "Writeup da sala Jump, cobrindo enumeracao de FTP anonimo, execucao automatica de scripts, movimentacao lateral e PATH hijacking."
+description: "A write-up of the Jump room, covering anonymous FTP enumeration, automated script execution, lateral movement, and PATH hijacking."
 permalink: /posts/jump/
 image:
   path: /assets/img/posts/tryhackme/jump/jump.png
-  alt: Logo da sala Jump no TryHackMe
+  alt: TryHackMe Jump room logo
 ---
 
 # TryHackMe - Jump
 
-## Visao Geral
+## Overview
 
-Este writeup documenta o caminho seguido na sala **Jump**, do TryHackMe. O objetivo foi enumerar os servicos expostos, obter acesso inicial e realizar movimentacao lateral entre usuarios a partir de tarefas automatizadas e configuracoes inseguras.
+This write-up documents the path I followed through the **Jump** room on TryHackMe. The goal was to enumerate exposed services, gain initial access, and move laterally between users by taking advantage of automated tasks and insecure configurations.
 
-O raciocinio foi organizado na mesma ordem em que a exploracao ocorreu:
+The steps are presented in the same order as the original exploitation path:
 
-- reconhecimento dos servicos com Nmap;
-- enumeracao do FTP anonimo;
-- identificacao do processamento automatico de arquivos `.sh`;
-- acesso inicial como `recon_user`;
-- movimentacao lateral para `dev_user` por meio de um script gravavel;
-- exploracao de PATH hijacking para executar um payload como `monitor_user`;
-- movimentacao lateral para `ops_user` por meio de uma entrada insegura no `sudo`;
-- escalada final para `root` usando a permissao concedida para executar o `less`.
+- service reconnaissance with Nmap;
+- anonymous FTP enumeration;
+- identification of automatic processing for `.sh` files;
+- initial access as `recon_user`;
+- lateral movement to `dev_user` through a writable script;
+- PATH hijacking to execute a payload as `monitor_user`;
+- lateral movement to `ops_user` through an unsafe `sudo` rule;
+- final privilege escalation to `root` by using the permitted `less` binary.
 
-> Este material foi produzido para fins educacionais e a atividade foi realizada somente contra o alvo autorizado do TryHackMe. As flags foram ocultadas.
+> This material is for educational purposes. The activity was performed only against the authorized TryHackMe target. All flags have been redacted.
 
 ---
 
-## Reconhecimento
+## Reconnaissance
 
-O primeiro passo foi identificar portas, servicos e versoes com o Nmap:
+The first step was to identify open ports, services, and versions with Nmap:
 
 ```bash
 nmap -sC -sV -Pn <TARGET_IP>
 ```
 
-O resultado mostrou as portas 21 e 22 abertas:
+The scan showed ports 21 and 22 open:
 
 ```text
 21/tcp  open  ftp  vsftpd 3.0.5
 22/tcp  open  ssh  OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
 ```
 
-Os scripts padrao do Nmap tambem indicaram que o servico FTP permitia autenticacao anonima. Como o servico expunha um diretorio acessivel sem credenciais, a proxima etapa foi enumerar seu conteudo e verificar as permissoes de leitura e escrita.
+Nmap's default scripts also reported that the FTP service allowed anonymous authentication. Since the service exposed a directory accessible without credentials, the next step was to enumerate its contents and check read and write permissions.
 
-![Evidencia do reconhecimento com Nmap](/assets/img/posts/tryhackme/jump/01-reconnaissance.png)
+![Nmap reconnaissance evidence](/assets/img/posts/tryhackme/jump/01-reconnaissance.png)
 
 ---
 
-## Enumeracao do FTP
+## FTP Enumeration
 
-Conectei-me ao servico utilizando o usuario anonimo:
+I connected to the service using the anonymous account:
 
 ```bash
 ftp <TARGET_IP>
 ```
 
-Depois do login, a listagem apresentou dois diretorios:
+After logging in, the directory listing showed two directories:
 
 ```text
 incoming
 pub
 ```
 
-O diretorio `incoming` possuia permissao de escrita. No diretorio `pub`, havia uma informacao indicando que determinados formatos enviados para `incoming` eram processados automaticamente.
+The `incoming` directory was writable. In `pub`, I found information indicating that certain file formats uploaded to `incoming` were processed automatically.
 
-Esse detalhe mudou a linha de investigacao. Em vez de apenas procurar arquivos para baixar, passei a testar quais extensoes eram aceitas e o que acontecia quando um arquivo correspondente era enviado ao diretorio gravavel.
+That detail shaped the next part of the investigation. Rather than only looking for files to download, I tested which extensions were accepted and what happened when a matching file was uploaded to the writable directory.
 
-![Evidencia do login anonimo e da listagem do FTP](/assets/img/posts/tryhackme/jump/02-ftp-enumeration.png)
+![Evidence of the anonymous FTP login and directory listing](/assets/img/posts/tryhackme/jump/02-ftp-enumeration.png)
 
 ---
 
-## Acesso Inicial
+## Initial Access
 
-Os testes mostraram que arquivos com extensao `.sh` eram processados. A partir disso, preparei um script contendo uma reverse shell, enviei o arquivo para `incoming` e deixei um listener aguardando a conexao:
+The tests showed that files with the `.sh` extension were processed. Based on that behavior, I prepared a script containing a reverse shell, uploaded it to `incoming`, and started a listener:
 
 ```bash
 nc -nlvp 4444
 ```
 
-Quando o processamento automatico ocorreu, a conexao retornou um shell no contexto de `recon_user`.
+When the automated processing ran, the connection returned a shell in the context of `recon_user`.
 
-![Evidencia do envio do script e do recebimento da conexao](/assets/img/posts/tryhackme/jump/03-initial-shell.png)
+![Evidence of the script upload and incoming connection](/assets/img/posts/tryhackme/jump/03-initial-shell.png)
 
-Com esse acesso inicial, confirmei a existencia da primeira flag. O valor foi ocultado tanto do texto quanto da evidencia visual publicada.
+With initial access established, I confirmed the first flag. Its value is redacted from both the text and the published visual evidence.
 
-![Evidencia do acesso inicial como recon_user](/assets/img/posts/tryhackme/jump/04-recon-user-access.png)
+![Evidence of the initial shell as recon_user](/assets/img/posts/tryhackme/jump/04-recon-user-access.png)
 
 ---
 
-## Movimentacao lateral: recon_user -> dev_user
+## Lateral Movement: recon_user -> dev_user
 
-Com o shell inicial estabelecido, o proximo objetivo foi entender quais tarefas eram executadas automaticamente e em qual contexto de usuario. Para isso, utilizei o `pspy64`, que permite observar processos sem exigir privilegios administrativos:
+With the initial shell established, the next goal was to understand which tasks ran automatically and under which user account. I used `pspy64`, which allows processes to be observed without administrative privileges:
 
 ```bash
 ./pspy64
 ```
 
-Entre os processos recorrentes, apareceu a execucao de:
+Among the recurring processes, I saw the following command:
 
 ```text
 /bin/bash /opt/dev/backup.sh
 ```
 
-A descoberta foi relevante porque o script era executado por outro usuario. Em seguida, verifiquei suas permissoes:
+This was relevant because the script was being run by another user. I then checked its permissions:
 
 ```bash
 ls -la /opt/dev/backup.sh
 ```
 
-O arquivo pertencia a `dev_user`, mas estava gravavel no contexto disponivel. Um script gravavel que sera executado automaticamente por outro usuario representa uma oportunidade de movimentacao lateral: o conteudo pode ser alterado antes da proxima execucao e os comandos adicionados serao executados com as permissoes do processo agendado.
+The file belonged to `dev_user`, but was writable from my current context. A writable script that is automatically executed by another user creates an opportunity for lateral movement: its contents can be changed before the next run, causing added commands to execute with the permissions of the scheduled process.
 
-![Evidencia do processo backup.sh identificado pelo pspy](/assets/img/posts/tryhackme/jump/05-pspy-processes.png)
+![Evidence of the backup.sh process identified with pspy](/assets/img/posts/tryhackme/jump/05-pspy-processes.png)
 
-![Evidencia das permissoes de escrita em backup.sh](/assets/img/posts/tryhackme/jump/06-backup-permissions.png)
+![Evidence that backup.sh is writable](/assets/img/posts/tryhackme/jump/06-backup-permissions.png)
 
-Editei o script para incluir uma reverse shell controlada e iniciei outro listener:
+I edited the script to include a controlled reverse shell and started another listener:
 
 ```bash
 nc -nlvp 4445
 ```
 
-Na execucao seguinte da tarefa automatizada, a conexao foi recebida como `dev_user`. Assim, a movimentacao lateral foi concluida sem depender de uma senha ou de um novo servico exposto.
+When the automated task ran again, the connection arrived as `dev_user`. This completed the lateral movement without requiring a password or another exposed service.
 
-![Evidencia do shell obtido como dev_user e do arquivo de flag](/assets/img/posts/tryhackme/jump/07-dev-user-shell.png)
+![Evidence of the shell as dev_user and the flag file](/assets/img/posts/tryhackme/jump/07-dev-user-shell.png)
 
 ---
 
 ## PATH Hijacking: dev_user -> monitor_user
 
-Ainda a partir de `dev_user`, continuei analisando os processos observados pelo `pspy`. O servico recorrente `/usr/local/bin/healthcheck` chamou atencao porque executava o comando `ps` sem informar seu caminho absoluto:
+Still operating as `dev_user`, I continued reviewing the processes observed with `pspy`. The recurring `/usr/local/bin/healthcheck` service stood out because it ran `ps` without specifying an absolute path:
 
 ```bash
 ps aux | grep -v grep
 ```
 
-Em vez de chamar diretamente `/usr/bin/ps`, o shell precisa localizar um executavel chamado `ps` consultando os diretorios definidos na variavel `PATH`. O script do health-check era executado como `monitor_user`:
+Instead of invoking `/usr/bin/ps` directly, the shell has to locate an executable named `ps` by searching the directories listed in the `PATH` variable. The health-check script ran as `monitor_user`:
 
 ```bash
 cat /etc/systemd/system/healthcheck.service
 ```
 
-Na configuracao do servico, o PATH estava definido assim:
+The service configuration defined `PATH` as follows:
 
 ```text
 Environment=PATH=/opt/dev/bin:/usr/local/bin:/usr/bin
 ```
 
-O shell procura os binarios da esquerda para a direita. Como `/opt/dev/bin` aparecia antes de `/usr/bin`, um binario falso chamado `ps`, colocado no primeiro diretorio pesquisado, poderia ser encontrado antes do binario legitimo do sistema.
+The shell searches for executables from left to right. Because `/opt/dev/bin` appeared before `/usr/bin`, a fake executable named `ps` placed in the first directory could be found before the legitimate system binary.
 
-![Evidencia do script health-check executando ps sem caminho absoluto](/assets/img/posts/tryhackme/jump/08-healthcheck-script.png)
+![Evidence of the health-check script invoking ps without an absolute path](/assets/img/posts/tryhackme/jump/08-healthcheck-script.png)
 
-![Evidencia do PATH e da execucao do servico como monitor_user](/assets/img/posts/tryhackme/jump/09-service-path.png)
+![Evidence of the PATH value and the service running as monitor_user](/assets/img/posts/tryhackme/jump/09-service-path.png)
 
-A partir dessa condicao, criei um binario `ps` controlado contendo o payload de reverse shell e aguardei a execucao do health-check. Como o servico era executado no contexto de `monitor_user`, o payload seria chamado com as permissoes desse usuario.
+I created a controlled `ps` executable containing a reverse-shell payload and waited for the health check to run. Since the service ran in the context of `monitor_user`, the payload was executed with that user's permissions.
 
-Esse e o principio do **PATH hijacking**: um processo executado por outro usuario chama um binario apenas pelo nome, enquanto o atacante consegue influenciar um diretorio que aparece antes do caminho oficial no `PATH`.
+This is the principle behind **PATH hijacking**: a process running as another user invokes a binary by name, while an attacker can influence a directory that appears before the official binary's location in `PATH`.
 
-![Evidencia do shell obtido como monitor_user](/assets/img/posts/tryhackme/jump/10-monitor-user-shell.png)
+![Evidence of the shell obtained as monitor_user](/assets/img/posts/tryhackme/jump/10-monitor-user-shell.png)
 
-## Movimentacao lateral: monitor_user -> ops_user
+---
 
-Com o shell de `monitor_user`, fiz uma enumeracao basica das permissoes delegadas ao usuario. A configuracao do `sudo` indicou que `monitor_user` podia executar `/usr/local/bin/deploy.sh` como `ops_user` sem fornecer senha.
+## Lateral Movement: monitor_user -> ops_user
 
-![Evidencia da permissao sudo de monitor_user](/assets/img/posts/tryhackme/jump/11-monitor-sudo-config.png)
+From the `monitor_user` shell, I performed basic enumeration of the permissions delegated to that account. The `sudo` configuration showed that `monitor_user` could run `/usr/local/bin/deploy.sh` as `ops_user` without entering a password.
 
-Ao analisar o script, observei que `/usr/local/bin/deploy.sh` executava o arquivo relativo `./deploy_helper.sh` dentro de `/opt/app`. Como o arquivo auxiliar estava gravavel pelo usuario atual, ele representava o ponto de controle da execucao: o conteudo poderia ser alterado e seria chamado quando o script principal fosse executado com `sudo`.
+![Evidence of the sudo permission for monitor_user](/assets/img/posts/tryhackme/jump/11-monitor-sudo-config.png)
 
-![Evidencia do deploy.sh e da chamada ao arquivo auxiliar](/assets/img/posts/tryhackme/jump/12-deploy-script.png)
+Inspecting the script showed that `/usr/local/bin/deploy.sh` ran the relative file `./deploy_helper.sh` from within `/opt/app`. The helper file was writable by the current user, making it the point of control: its contents could be changed, and it would be invoked when the main script ran through `sudo`.
 
-![Evidencia do deploy_helper.sh gravavel](/assets/img/posts/tryhackme/jump/13-deploy-helper.png)
+![Evidence of deploy.sh and its call to the helper file](/assets/img/posts/tryhackme/jump/12-deploy-script.png)
 
-Preparei o payload de reverse shell no arquivo auxiliar e executei o script principal com a delegacao disponivel:
+![Evidence that deploy_helper.sh is writable](/assets/img/posts/tryhackme/jump/13-deploy-helper.png)
+
+I placed the reverse-shell payload in the helper file and ran the main script using the available delegation:
 
 ```bash
 sudo -u ops_user /usr/local/bin/deploy.sh
 ```
 
-Como o processo foi iniciado no contexto de `ops_user`, a execucao do arquivo auxiliar devolveu uma nova conexao como esse usuario.
+Because the process was started as `ops_user`, execution of the helper returned a new connection under that account.
 
-![Evidencia do payload preparado para o deploy_helper.sh](/assets/img/posts/tryhackme/jump/14-ops-user-payload.png)
+![Evidence of the payload prepared for deploy_helper.sh](/assets/img/posts/tryhackme/jump/14-ops-user-payload.png)
 
-![Evidencia do shell obtido como ops_user](/assets/img/posts/tryhackme/jump/15-ops-user-shell.png)
-
-## Escalada final: ops_user -> root
-
-Na etapa seguinte, a enumeracao das permissoes de `ops_user` revelou outra configuracao insegura no `sudo`: o usuario podia executar `/usr/bin/less` como `root` sem senha.
-
-![Evidencia da permissao sudo de ops_user para executar less como root](/assets/img/posts/tryhackme/jump/16-root-sudo-config.png)
-
-Essa permissao permitiu usar o próprio `less` para abrir diretamente o arquivo de flag em `/root`. O acesso ao conteúdo confirmou a escalada final para `root`; o valor da flag permanece oculto na evidencia visual.
-
-![Evidencia da leitura da flag com less como root](/assets/img/posts/tryhackme/jump/17-root-less-flag.png)
+![Evidence of the shell obtained as ops_user](/assets/img/posts/tryhackme/jump/15-ops-user-shell.png)
 
 ---
 
-## Principais aprendizados
+## Final Privilege Escalation: ops_user -> root
 
-1. Um servico aparentemente simples pode revelar uma cadeia de ataque quando suas permissoes sao analisadas com cuidado.
-2. FTP anonimo, diretorio gravavel e processamento automatico de arquivos formaram o caminho ate o acesso inicial.
-3. O `pspy` ajudou a identificar tarefas recorrentes e a relacionar cada tarefa ao usuario que a executava.
-4. Scripts gravaveis executados por outro usuario devem ser tratados como uma oportunidade de movimentacao lateral.
-5. Comandos chamados sem caminho absoluto precisam ser avaliados junto com a ordem do `PATH` e as permissoes dos diretorios envolvidos.
-6. Entradas do `sudo` que permitem executar scripts ou binarios como outro usuario ampliam o impacto de arquivos gravaveis.
-7. Binarios interativos como `less` tambem precisam ser avaliados com cuidado quando podem ser executados como `root`.
-8. Em um writeup publico, e importante preservar o raciocinio tecnico sem expor as respostas da sala. Por isso, as flags permanecem ocultas.
+Next, enumeration of `ops_user`'s permissions revealed another unsafe `sudo` configuration: the user could run `/usr/bin/less` as `root` without a password.
 
-## Ferramentas utilizadas
+![Evidence of the sudo permission allowing ops_user to run less as root](/assets/img/posts/tryhackme/jump/16-root-sudo-config.png)
+
+This permission allowed me to use `less` as `root` to open the flag file under `/root` directly. Access to its contents confirmed the final escalation to `root`; the flag value remains redacted in the visual evidence.
+
+![Evidence of reading the flag with less as root](/assets/img/posts/tryhackme/jump/17-root-less-flag.png)
+
+---
+
+## Key Takeaways
+
+1. A seemingly simple service can expose an attack chain when its permissions are examined carefully.
+2. Anonymous FTP, a writable directory, and automatic file processing formed the path to initial access.
+3. `pspy` helped identify recurring tasks and determine which user ran each one.
+4. Writable scripts executed by another user should be treated as a lateral-movement opportunity.
+5. Commands invoked without absolute paths must be assessed together with `PATH` ordering and directory permissions.
+6. `sudo` rules that allow scripts or binaries to run as another user can greatly increase the impact of writable files.
+7. Interactive binaries such as `less` also require careful review when they can be run as `root`.
+8. A public write-up should preserve the technical reasoning without exposing room answers. All flags therefore remain redacted.
+
+## Tools Used
 
 - Nmap
-- Cliente FTP
+- FTP client
 - Netcat
 - `pspy64`
-- Utilitarios de shell Linux
+- Linux shell utilities
 - `sudo`
 - `less`
