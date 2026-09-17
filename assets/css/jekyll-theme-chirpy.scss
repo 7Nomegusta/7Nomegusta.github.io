@@ -1094,7 +1094,7 @@ a.rn-category-card:hover .rn-open i {
 main:has(.rn-home)::before { display: none; }
 
 .rn-home {
-  --rn-home-gap: clamp(2.4rem, 5vw, 4.2rem);
+  --rn-home-gap: clamp(2.2rem, 3.4vw, 3rem);
   color: var(--rn-text);
 }
 
@@ -1106,11 +1106,11 @@ main:has(.rn-home)::before { display: none; }
 
 .rn-home-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(290px, 0.92fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 34%);
   align-items: center;
-  gap: clamp(1.5rem, 4vw, 3.5rem);
-  padding: 1.2rem 0 var(--rn-home-gap);
-  border-bottom: 1px solid rgba(255, 48, 79, 0.16);
+  gap: clamp(1.5rem, 3.4vw, 3rem);
+  padding: 0.75rem 0 1.4rem;
+  border-bottom: 1px solid rgba(255, 48, 79, 0.13);
 }
 
 .rn-home-intro { min-width: 0; }
@@ -1127,7 +1127,7 @@ main:has(.rn-home)::before { display: none; }
 .rn-home-intro h1 {
   margin: 0;
   color: #f2f4f7;
-  font-size: clamp(2.35rem, 5vw, 4.15rem);
+  font-size: clamp(2rem, 3.7vw, 3.45rem);
   font-weight: 750;
   letter-spacing: -0.055em;
   line-height: 1.06;
@@ -1211,14 +1211,14 @@ main:has(.rn-home)::before { display: none; }
 .rn-terminal {
   overflow: hidden;
   background: linear-gradient(150deg, rgba(13, 18, 25, 0.96), rgba(6, 9, 13, 0.98));
-  border: 1px solid rgba(0, 217, 255, 0.17);
+  border: 1px solid rgba(0, 217, 255, 0.13);
   border-radius: 9px;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24), 0 0 24px rgba(255, 23, 68, 0.045);
+  box-shadow: 0 13px 32px rgba(0, 0, 0, 0.2), 0 0 16px rgba(255, 23, 68, 0.035);
 }
 
 .rn-terminal-bar {
   display: flex;
-  height: 36px;
+  height: 32px;
   align-items: center;
   gap: 6px;
   padding: 0 0.8rem;
@@ -1226,8 +1226,8 @@ main:has(.rn-home)::before { display: none; }
 }
 
 .rn-terminal-bar > span:not(.rn-terminal-title) {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #56616e;
   border-radius: 50%;
 }
@@ -1244,10 +1244,10 @@ main:has(.rn-home)::before { display: none; }
 }
 
 .rn-terminal-body {
-  padding: 1rem 1.1rem 1.15rem;
+  padding: 0.88rem 0.95rem 1rem;
   color: #cbd4dc;
   font-family: var(--rn-font-mono);
-  font-size: clamp(0.68rem, 1vw, 0.78rem);
+  font-size: clamp(0.64rem, 0.92vw, 0.72rem);
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
@@ -1271,6 +1271,7 @@ main:has(.rn-home)::before { display: none; }
 }
 
 .rn-home-section { margin-top: var(--rn-home-gap); }
+.rn-featured { margin-top: 2rem; }
 
 .rn-section-heading {
   display: flex;
@@ -1293,6 +1294,16 @@ main:has(.rn-home)::before { display: none; }
 }
 
 .rn-section-heading h2::before { display: none !important; }
+
+.rn-featured .rn-section-heading {
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.22rem;
+}
+
+.rn-featured .rn-section-heading .rn-home-eyebrow { margin: 0; }
+.rn-featured .rn-section-heading h2 { text-transform: none; }
 
 .rn-featured-card {
   display: grid;
@@ -1434,14 +1445,14 @@ main:has(.rn-home)::before { display: none; }
 .rn-latest-empty { margin: 0; color: var(--rn-text-soft); font-size: 0.88rem; }
 
 @media (max-width: 849px) {
-  .rn-home-hero { grid-template-columns: minmax(0, 1fr) minmax(240px, 0.82fr); gap: 1.1rem; }
-  .rn-terminal-body { padding: 0.85rem; }
+  .rn-home-hero { grid-template-columns: minmax(0, 1fr) minmax(220px, 36%); gap: 1rem; }
+  .rn-terminal-body { padding: 0.78rem; }
   .rn-interest-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
   .rn-home-hero { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-  .rn-home-intro h1 { font-size: clamp(2.3rem, 12vw, 3.35rem); }
+  .rn-home-intro h1 { font-size: clamp(1.95rem, 9.6vw, 2.85rem); }
   .rn-home-actions { gap: 0.5rem; }
   .rn-home-button { flex: 1 1 auto; }
   .rn-terminal-body { font-size: 0.72rem; }
@@ -1452,6 +1463,59 @@ main:has(.rn-home)::before { display: none; }
   .rn-writeup-image { min-height: 180px; border-right: 0; border-bottom: 1px solid rgba(255, 48, 79, 0.12); }
   .rn-writeup-image img { max-height: 200px; }
   .rn-section-heading { align-items: start; flex-direction: column; gap: 0.25rem; }
+}
+
+/* Chirpy's global panel and topbar stay intact on every non-home page. */
+body:has(.rn-home) #panel-wrapper { display: none; }
+
+@media (min-width: 850px) {
+  body:has(.rn-home) #topbar-wrapper { display: none; }
+}
+
+@media (min-width: 992px) {
+  body:has(.rn-home) main,
+  body:has(.rn-home) #tail-wrapper {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 849px) {
+  body:has(.rn-home) #breadcrumb,
+  body:has(.rn-home) #topbar-title,
+  body:has(.rn-home) #search-trigger,
+  body:has(.rn-home) #search {
+    display: none;
+  }
+
+  body:has(.rn-home) #topbar-wrapper { display: block; }
+}
+
+/* Compact the existing sidebar profile and navigation on the landing page only. */
+body:has(.rn-home) #sidebar .profile-wrapper {
+  margin-top: 42px;
+  margin-bottom: 14px;
+}
+
+body:has(.rn-home) #sidebar #avatar {
+  width: 98px;
+  height: 98px;
+}
+
+body:has(.rn-home) #sidebar #avatar img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+}
+
+body:has(.rn-home) #sidebar .site-title { margin: 16px 0 6px; }
+body:has(.rn-home) #sidebar .site-subtitle { margin-top: 3px; }
+body:has(.rn-home) #sidebar .nav { margin-bottom: 28px; }
+body:has(.rn-home) #sidebar .nav-item + .nav-item { margin-top: 2px; }
+
+body:has(.rn-home) #sidebar .nav-link {
+  padding-top: 8.2px;
+  padding-bottom: 8.2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
