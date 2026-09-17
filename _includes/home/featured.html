@@ -1,0 +1,42 @@
+{% assign featured_posts = site.posts | where: 'featured', true %}
+{% assign featured_post = featured_posts.first | default: site.posts.first %}
+
+{% if featured_post %}
+  {% assign featured_image = featured_post.image.path | default: featured_post.image %}
+  <section class="rn-home-section rn-featured" aria-labelledby="rn-featured-title">
+    <div class="rn-section-heading">
+      <p class="rn-home-eyebrow">Selected field note</p>
+      <h2 id="rn-featured-title">Featured Operation</h2>
+    </div>
+
+    <article class="rn-featured-card">
+      <a class="rn-featured-image" href="{{ featured_post.url | relative_url }}" aria-label="Read {{ featured_post.title | escape }}">
+        {% if featured_image %}
+          <img src="{{ featured_image | relative_url }}" alt="{{ featured_post.image.alt | default: featured_post.title | escape }}" loading="lazy">
+        {% else %}
+          <img src="{{ '/assets/img/avatar.png' | relative_url }}" alt="RedNoctis logo" loading="lazy">
+        {% endif %}
+      </a>
+      <div class="rn-featured-copy">
+        <div class="rn-featured-meta">
+        {% for category in featured_post.categories %}
+            {% assign category_slug = category | slugify %}
+            <a href="{{ '/categories/' | append: category_slug | append: '/' | relative_url }}">{{ category }}</a>
+          {% endfor %}
+          <time datetime="{{ featured_post.date | date_to_xmlschema }}">{{ featured_post.date | date: "%b %d, %Y" }}</time>
+        </div>
+        <h3><a href="{{ featured_post.url | relative_url }}">{{ featured_post.title | escape }}</a></h3>
+        <p>{{ featured_post.description | default: featured_post.excerpt | strip_html | strip_newlines | truncate: 190 }}</p>
+        {% if featured_post.tags.size > 0 %}
+          <ul class="rn-featured-tags" aria-label="Topics">
+            {% for tag in featured_post.tags limit: 4 %}
+              {% assign tag_slug = tag | slugify %}
+              <li><a href="{{ '/tags/' | append: tag_slug | append: '/' | relative_url }}">{{ tag }}</a></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        <a class="rn-featured-link" href="{{ featured_post.url | relative_url }}">Read writeup <span aria-hidden="true">→</span></a>
+      </div>
+    </article>
+  </section>
+{% endif %}
