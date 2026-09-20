@@ -1528,3 +1528,310 @@ body:has(.rn-home) #sidebar .nav-link {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ==========================================================
+   REDNOCTIS // TECHNICAL WRITEUP REFINEMENT
+   Scoped to Chirpy post pages: content first, identity second.
+   ========================================================== */
+
+/* Keep the RedNoctis atmosphere, but lower decorative noise while reading. */
+body:has(article[data-toc])::before {
+  opacity: 0.26;
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.38), transparent 76%);
+}
+
+body:has(article[data-toc])::after {
+  opacity: 0.035;
+}
+
+main:has(article[data-toc])::before {
+  content: none;
+  display: none;
+}
+
+article[data-toc] > header,
+article[data-toc] .content {
+  max-width: 76ch;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+article[data-toc] > header {
+  padding-top: 0.75rem;
+}
+
+article[data-toc] > header h1 {
+  max-width: 22ch;
+  margin: 0 0 0.8rem;
+  color: #f4f7fa;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  text-shadow: none;
+}
+
+article[data-toc] .post-desc {
+  max-width: 62ch;
+  margin-bottom: 1.35rem !important;
+  color: #aeb9c7;
+  font-size: 1.06rem;
+  line-height: 1.65;
+}
+
+article[data-toc] .post-meta {
+  color: #778393 !important;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+article[data-toc] .post-meta a {
+  color: #9ca8b6;
+}
+
+article[data-toc] .preview-img {
+  display: block;
+  overflow: hidden;
+  margin-top: 1.35rem;
+  background: #080c11;
+  border: 1px solid rgba(0, 217, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+}
+
+article[data-toc] .preview-img img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+article[data-toc] > header figcaption {
+  padding: 0.55rem 0.15rem 0 !important;
+  color: #737f8e;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+article[data-toc] .content {
+  color: #d5dde7;
+  font-size: 1.02rem;
+  line-height: 1.78;
+}
+
+article[data-toc] .content > p,
+article[data-toc] .content > ul,
+article[data-toc] .content > ol {
+  margin-bottom: 1.2rem;
+}
+
+article[data-toc] .content h2 {
+  margin-top: 3.35rem;
+  margin-bottom: 1.05rem;
+  padding-left: 0.78rem;
+  color: #eef3f7;
+  font-size: clamp(1.42rem, 2.4vw, 1.85rem);
+  line-height: 1.2;
+}
+
+article[data-toc] .content h2::before {
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 3px;
+  box-shadow: none;
+}
+
+article[data-toc] .content h3 {
+  margin-top: 2.35rem;
+  margin-bottom: 0.75rem;
+  color: #dfe8f0;
+  font-family: var(--rn-font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+}
+
+article[data-toc] .content hr {
+  margin: 2.6rem 0;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Markdown images become figures via _plugins/post-image-captions.rb. */
+article[data-toc] .content .rn-evidence {
+  margin: 1.9rem 0 2.15rem;
+}
+
+article[data-toc] .content .rn-evidence .img-link {
+  display: block;
+  overflow: hidden;
+  background: #080c11;
+  border: 1px solid rgba(151, 166, 183, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+article[data-toc] .content .rn-evidence img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+article[data-toc] .content .rn-evidence figcaption {
+  margin-top: 0.5rem;
+  color: #778392;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+article[data-toc] div.highlighter-rouge,
+article[data-toc] figure.highlight {
+  max-width: 100%;
+  margin: 1.45rem 0;
+  overflow: hidden;
+  border-color: rgba(0, 217, 255, 0.14);
+  border-radius: 9px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+article[data-toc] .highlight,
+article[data-toc] .highlight pre {
+  overflow-x: auto;
+  scrollbar-color: #394554 #080c11;
+}
+
+article[data-toc] #toc-bar {
+  border-color: rgba(0, 217, 255, 0.12);
+}
+
+body:has(article[data-toc]) #toc-wrapper {
+  border-left-color: rgba(0, 217, 255, 0.16);
+}
+
+body:has(article[data-toc]) #toc-wrapper a {
+  color: #7e8a99;
+  line-height: 1.45;
+}
+
+body:has(article[data-toc]) #toc-wrapper a:hover,
+body:has(article[data-toc]) #toc-wrapper .active {
+  color: var(--rn-cyan);
+  text-shadow: none;
+}
+
+/* Reusable report cards: H3 + Root cause, Impact, Remediation paragraphs. */
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p + p {
+  margin: 0;
+  padding-right: 1.2rem;
+  padding-left: 1.2rem;
+  background: linear-gradient(145deg, rgba(12, 17, 23, 0.92), rgba(8, 12, 17, 0.94));
+  border-right: 1px solid rgba(122, 137, 152, 0.2);
+  border-left: 1px solid rgba(122, 137, 152, 0.2);
+}
+
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 {
+  position: relative;
+  margin-top: 1.5rem;
+  padding-top: 1.15rem;
+  padding-bottom: 0.75rem;
+  border-top: 1px solid rgba(0, 217, 255, 0.22);
+  border-radius: 10px 10px 0 0;
+  color: #eaf3f8;
+}
+
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3::before {
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  width: 3px;
+  height: 1.1rem;
+  content: "";
+  background: linear-gradient(var(--rn-red-hot), var(--rn-cyan));
+}
+
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p + p {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  color: #c2ccd7;
+  font-size: 0.94rem;
+  line-height: 1.68;
+}
+
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p strong,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p strong,
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p + p strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--rn-cyan);
+  font-family: var(--rn-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p + p {
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(255, 48, 79, 0.22);
+  border-radius: 0 0 10px 10px;
+}
+
+@media (max-width: 849px) {
+  body:has(article[data-toc])::before {
+    opacity: 0.18;
+    background-size: 40px 40px;
+  }
+
+  article[data-toc] > header,
+  article[data-toc] .content {
+    max-width: none;
+  }
+
+  article[data-toc] > header h1 {
+    font-size: clamp(1.82rem, 8.5vw, 2.45rem);
+  }
+
+  article[data-toc] .post-desc {
+    font-size: 0.98rem;
+  }
+
+  article[data-toc] .content {
+    font-size: 0.98rem;
+    line-height: 1.72;
+  }
+
+  article[data-toc] .content h2 {
+    margin-top: 2.65rem;
+    font-size: 1.42rem;
+  }
+
+  article[data-toc] .content h3 {
+    margin-top: 1.9rem;
+    font-size: 0.92rem;
+  }
+
+  article[data-toc] .content .rn-evidence {
+    margin: 1.5rem 0 1.75rem;
+  }
+
+  article[data-toc] .content .rn-evidence .img-link,
+  article[data-toc] .preview-img,
+  article[data-toc] div.highlighter-rouge,
+  article[data-toc] figure.highlight {
+    border-radius: 8px;
+  }
+
+  article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3,
+  article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p,
+  article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p,
+  article[data-toc] .content h2#vulnerability-analysis-and-remediation ~ h3 + p + p + p {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+}

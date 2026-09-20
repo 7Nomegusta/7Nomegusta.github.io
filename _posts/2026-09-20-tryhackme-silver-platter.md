@@ -10,8 +10,6 @@ image:
   alt: TryHackMe Silver Platter room artwork
 ---
 
-# TryHackMe - Silver Platter
-
 ## Overview
 
 This write-up documents the path I followed through the **Silver Platter** room on TryHackMe. The objective was to enumerate the exposed services, gain access to the Silverpeas application, obtain an initial shell, and escalate privileges to `root`.

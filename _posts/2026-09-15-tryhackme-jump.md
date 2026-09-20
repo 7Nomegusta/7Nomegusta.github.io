@@ -10,8 +10,6 @@ image:
   alt: TryHackMe Jump room logo
 ---
 
-# TryHackMe - Jump
-
 ## Overview
 
 This write-up documents the path I followed through the **Jump** room on TryHackMe. The goal was to enumerate exposed services, gain initial access, and move laterally between users by taking advantage of automated tasks and insecure configurations.
