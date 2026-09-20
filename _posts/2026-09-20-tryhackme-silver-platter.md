@@ -22,7 +22,7 @@ The attack path consisted of:
 - web and directory enumeration;
 - discovery of a Silverpeas username;
 - creation of a targeted password wordlist;
-- authentication to Silverpeas through a dictionary attack;
+- authentication to Silverpeas through a targeted password attack;
 - exploitation of an insecure direct object reference (IDOR);
 - SSH access as `tim`;
 - discovery of credentials exposed in authentication logs;
@@ -88,7 +88,7 @@ http://<TARGET_IP>:8080/silverpeas/
 
 ## Silverpeas Authentication
 
-Before attempting a dictionary attack, I intercepted a login request with Burp Suite to understand the application's authentication flow. A failed login produced a `302 Found` response and redirected the browser to an error page.
+Before attempting a targeted password attack, I intercepted a login request with Burp Suite to understand the application's authentication flow. A failed login produced a `302 Found` response and redirected the browser to an error page.
 
 ![Failed Silverpeas login request inspected with Burp Suite](/assets/img/posts/tryhackme/silver-platter/05-burp-login-response.png)
 
@@ -100,7 +100,7 @@ cewl http://<TARGET_IP> > passwords.txt
 
 ![Creating a targeted password list with CeWL](/assets/img/posts/tryhackme/silver-platter/06-cewl-wordlist.png)
 
-I then used Hydra against the Silverpeas authentication endpoint. The request body was reproduced from the request observed in Burp Suite, and `S=200` was used to identify the successful response:
+I then used Hydra against the Silverpeas authentication endpoint. The request body was reproduced from the request observed in Burp Suite. Failed attempts returned `302 Found`, while the successful login response returned HTTP status `200`. The `S=200` condition therefore instructed Hydra to treat a response containing status `200` as a successful authentication attempt:
 
 ```bash
 hydra -l scr1ptkiddy -P passwords.txt <TARGET_IP> -s 8080 \
@@ -189,17 +189,47 @@ The output contained the following rule:
 (ALL : ALL) ALL
 ```
 
-This rule allowed `tyler` to run any command as any user and group, including `root`. Since no command restrictions were defined, I used the unrestricted sudo access to start a root shell:
+This rule allowed `tyler` to run any command as any user and group, including `root`. Since no command restrictions were defined, a clean way to start a root login shell was:
 
 ![sudo -l showing tyler's unrestricted sudo privileges](/assets/img/posts/tryhackme/silver-platter/11-tyler-sudo-permissions.png)
 
 ```bash
-sudo su
+sudo -i
 ```
+
+During the lab, I used the equivalent `sudo su` command shown in the screenshot. In technical documentation, `sudo -i` states the intent more directly because it starts a login shell as the target user, which defaults to `root`.
 
 The prompt changed to `root`, confirming successful privilege escalation. From the root shell, the final flag could be read from `/root`; its value is not included in this write-up.
 
 ![Root shell obtained through tyler's sudo privileges](/assets/img/posts/tryhackme/silver-platter/12-root-shell.png)
+
+---
+
+## Vulnerability Analysis and Remediation
+
+### IDOR in Silverpeas Notifications
+
+**Root cause:** The application trusted a user-controlled message ID without verifying that the authenticated user owned or was authorized to access the requested notification.
+
+**Impact:** An authenticated low-privilege user could read notifications belonging to other users. In this case, one of those messages disclosed valid SSH credentials, turning an application-level authorization flaw into operating-system access.
+
+**Remediation:** Enforce server-side object-level authorization for every message request. The application must verify the current user's permission to access the requested notification before returning its contents. Non-sequential identifiers may reduce trivial enumeration, but they must not replace access-control checks.
+
+### Credential Exposure in System Logs
+
+**Root cause:** A password was supplied directly in a privileged Docker command, and the complete command line was recorded in the authentication log. The same password was also reused for the `tyler` system account.
+
+**Impact:** Membership in the `adm` group allowed `tim` to read the log, recover the credential, and move laterally to a user with unrestricted sudo privileges. The combination of command-line secret exposure and password reuse led directly to full system compromise.
+
+**Remediation:** Do not pass secrets directly on command lines. Use a dedicated secrets-management mechanism, Docker secrets, or a tightly permissioned environment file. Restrict access to sensitive logs, avoid recording secret values, rotate exposed credentials, and require unique passwords for separate services and system accounts.
+
+### Unrestricted Sudo Access
+
+**Root cause:** The sudoers policy granted `tyler` the unrestricted rule `(ALL : ALL) ALL`.
+
+**Impact:** Any compromise of the `tyler` account immediately provided complete root access.
+
+**Remediation:** Apply least privilege by allowing only the specific administrative commands required for the user's role. Review sudoers entries regularly and remove broad rules that permit arbitrary command execution.
 
 ---
 
