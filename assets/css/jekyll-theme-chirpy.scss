@@ -1322,37 +1322,42 @@ main:has(.rn-home)::before { display: none; }
   display: grid;
   min-height: 245px;
   place-items: center;
-  padding: 0.75rem 0.9rem;
+  padding: 0.5rem;
+  overflow: hidden;
   background: #090d12;
   border-right: 1px solid rgba(255, 48, 79, 0.12);
   box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.12);
 }
 
-.rn-featured-image .preview-img {
-  display: grid;
-  width: min(100%, 290px);
-  height: auto;
-  aspect-ratio: 1;
+.rn-featured-image > img,
+.rn-featured-image > .preview-img {
+  width: min(100%, 300px);
   max-height: none;
-  place-items: center;
-  overflow: hidden;
-  background: #090d12;
   border-radius: 8px;
 }
 
-.rn-featured-image .preview-img img {
+.rn-featured-image > img {
+  display: block;
+  height: auto;
+  object-fit: contain;
+}
+
+.rn-featured-image > .preview-img {
+  display: grid;
+  height: auto;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  background: #090d12;
+}
+
+.rn-featured-image > .preview-img > img {
   width: 100%;
   height: 100%;
   max-height: none;
   object-fit: contain;
-}
-
-.rn-featured-image img {
   display: block;
-  width: 100%;
-  max-height: 290px;
   border-radius: 8px;
-  object-fit: contain;
 }
 .rn-featured-copy { align-self: center; padding: clamp(1.2rem, 3vw, 2rem); }
 
@@ -1486,9 +1491,9 @@ main:has(.rn-home)::before { display: none; }
   .rn-home-button { flex: 1 1 auto; }
   .rn-terminal-body { font-size: 0.72rem; }
   .rn-featured-card { grid-template-columns: minmax(0, 1fr); }
-  .rn-featured-image { min-height: 200px; padding: 0.75rem 0.9rem; border-right: 0; border-bottom: 1px solid rgba(255, 48, 79, 0.12); }
-  .rn-featured-image .preview-img { width: min(100%, 240px); }
-  .rn-featured-image img { max-height: 240px; }
+  .rn-featured-image { min-height: 200px; padding: 0.5rem; border-right: 0; border-bottom: 1px solid rgba(255, 48, 79, 0.12); }
+  .rn-featured-image > img,
+  .rn-featured-image > .preview-img { width: min(100%, 240px); }
   .rn-writeup-card { grid-template-columns: minmax(0, 1fr); }
   .rn-writeup-image { min-height: 180px; border-right: 0; border-bottom: 1px solid rgba(255, 48, 79, 0.12); }
   .rn-writeup-image img { max-height: 200px; }
