@@ -1335,6 +1335,16 @@ main:has(.rn-home)::before { display: none; }
   aspect-ratio: 1;
   max-height: none;
   place-items: center;
+  overflow: hidden;
+  background: #090d12;
+  border-radius: 8px;
+}
+
+.rn-featured-image .preview-img img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
 }
 
 .rn-featured-image img {
